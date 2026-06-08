@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Auditoria - Faturamento de Mamografias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <main class="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+            
+            <header class="bg-white border-b border-slate-200 px-8 py-5 flex flex-wrap justify-between items-center gap-4 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-500 p-2 rounded-lg text-slate-900 font-bold text-xl shadow-sm">📊</div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900">Dashboard de Controle de Mamografias</h1>
+                        <p class="text-sm text-slate-500">Análise histórica e conciliação de produção (Fevereiro - Abril 2026)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <label for="mesFilter" class="text-sm font-semibold text-slate-600 pl-1">Filtrar Mês:</label>
+                    <select id="mesFilter" onchange="filtrarDashboard(this.value)" class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                        <option value="todos">Todos os Meses (Consolidado)</option>
+                        <option value="Fevereiro">Fevereiro / 2026</option>
+                        <option value="Março">Março / 2026</option>
+                        <option value="Abril">Abril / 2026</option>
+                    </select>
+                </div>
+            </header>
+
+            <div class="p-8 space-y-8">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <span class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Recebidas no Fat.</span>
+                        </div>
+                        <div class="mt-4">
+                            <h3 id="kpi-recebidas" class="text-3xl font-bold text-slate-9900">1.043</h3>
+                            <p class="text-xs text-slate-400 mt-1">Exames físicos entregues</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <span class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Aprovadas (Mês)</span>
+                        </div>
+                        <div class="mt-4">
+                            <h3 id="kpi-aprovadas" class="text-3xl font-bold text-emerald-600">893</h3>
+                            <p id="kpi-conversao" class="text-xs text-emerald-600 font-medium mt-1">85.6% de eficiência regulatória</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <span class="text-sm font-semibold uppercase tracking-wider font-medium text-amber-700">Não Constam SISCAN</span>
+                        </div>
+                        <div class="mt-4">
+                            <h3 id="kpi-nao-siscan" class="text-3xl font-bold text-amber-600">41</h3>
+                            <p class="text-xs text-slate-400 mt-1">Exames sem registro no sistema</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <span class="text-sm font-semibold uppercase tracking-wider text-rose-700">Glosas + Não Apres.</span>
+                        </div>
+                        <div class="mt-4">
+                            <h3 id="kpi-glosas" class="text-3xl font-bold text-rose-600">36</h3>
+                            <p class="text-xs text-slate-400 mt-1">Impacto direto no faturamento</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-base font-bold text-slate-900">Evolução de Faturamento vs. Recebidos</h3>
+                            <span class="text-xs text-slate-400">Dados do Fechamento Mensal</span>
+                        </div>
+                        <div class="h-72">
+                            <canvas id="chartEvolucao"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-base font-bold text-slate-900">Inconsistências Identificadas</h3>
+                            <span class="text-xs text-slate-400">Total do Período</span>
+                        </div>
+                        <div class="h-72 flex justify-center items-center">
+                            <canvas id="chartInconsistencias"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Lista Nominal de Pacientes com Ocorrências / Glosas</h3>
+                            <p class="text-xs text-slate-500">Filtragem dinâmica para tomada de decisão e auditoria reversa.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <select id="categoriaFilter" onchange="filtrarTabela()" class="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                                <option value="todas">Todas as Ocorrências</option>
+                                <option value="Não Consta no SISCAN">Não Consta no SISCAN</option>
+                                <option value="Glosada (Auditoria Médica)">Glosada (Auditoria Médica)</option>
+                                <option value="Não Apresentada para Auditoria">Não Apresentada para Auditoria</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar max-h-96">
+                        <table class="w-full text-left text-sm border-collapse">
+                            <thead class="bg-slate-100 text-slate-600 font-semibold sticky top-0 uppercase text-[11px] tracking-wider border-b border-slate-200 z-10">
+                                <tr>
+                                    <th class="px-6 py-3">Mês</th>
+                                    <th class="px-6 py-3">Paciente</th>
+                                    <th class="px-6 py-3">Procedimento</th>
+                                    <th class="px-6 py-3">Categoria da Ocorrência</th>
+                                    <th class="px-6 py-3">Motivo / Detalhe</th>
+                                    <th class="px-6 py-3">Data Realização</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaPacientes" class="divide-y divide-slate-100 text-slate-700">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const dadosResumo = {
+            "Fevereiro": { faturadasSiscan: 333, recebidas: 356, naoSiscan: 23, faturadoNaoRecebido: 103, glosas: 0, aprovadas: 230 },
+            "Março": { faturadasSiscan: 347, recebidas: 355, naoSiscan: 8, faturadoNaoRecebido: 1, glosas: 4, aprovadas: 341 },
+            "Abril": { faturadasSiscan: 354, recebidas: 332, naoSiscan: 10, faturadoNaoRecebido: 32, glosas: 0, aprovadas: 322 }
+        };
+
+        const pacientesOcorrencias = [
+            // Fevereiro - Não constam no SISCAN
+            { mes: "Fevereiro", nome: "Antonia Aparecida Alves Pereira", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "04/02/2026" },
+            { mes: "Fevereiro", nome: "Aureni Braz do Nascimento", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "06/02/2026" },
+            { mes: "Fevereiro", nome: "Elizete da Conceição Silva Barbier", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "06/02/2026" },
+            { mes: "Fevereiro", nome: "Idamara Gomes Aquino", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "23/02/2026" },
+            { mes: "Fevereiro", nome: "Katiane Rodrigues Lemes", cod: "204030030", proc: "Mamografia Unilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "20/01/2026" },
+            { mes: "Fevereiro", nome: "Luciene Borges", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "11/02/2026" },
+            { mes: "Fevereiro", nome: "Lucimar Centurion", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "05/02/2026" },
+            { mes: "Fevereiro", nome: "Lucimeire Ramos de Oliveira", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "06/02/2026" },
+            { mes: "Fevereiro", nome: "Luiza Rocha de Lima", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "02/02/2026" },
+            { mes: "Fevereiro", nome: "Marcia de Souza Martins", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "11/02/2026" },
+            { mes: "Fevereiro", nome: "Maria Celeida Moraes de Oliveira", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "04/02/2026" },
+            { mes: "Fevereiro", nome: "Maria Lucia da Silva Pereira", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "04/02/2026" },
+            { mes: "Fevereiro", nome: "Marlene Durand Werner", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "09/02/2026" },
+            { mes: "Fevereiro", nome: "Nilda Marques Ferreira Rocha", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "06/02/2026" },
+            { mes: "Fevereiro", nome: "Rhada Wahab", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "20/01/2026" },
+            { mes: "Fevereiro", nome: "Rosane Gomes de Araujo Santos", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "19/01/2026" },
+            { mes: "Fevereiro", nome: "Roseane Santana dos Santos", cod: "204030030", proc: "Mamografia Unilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "10/02/2026" },
+            { mes: "Fevereiro", nome: "Rozilda Martins Garcia", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "11/02/2026" },
+            { mes: "Fevereiro", nome: "Sandra Aparecida de Oliveira", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "06/02/2026" },
+            { mes: "Fevereiro", nome: "Sirlene Aparecida Morais", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "19/01/2026" },
+            { mes: "Fevereiro", nome: "Sonia Maria Cabral Lobo", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "19/01/2026" },
+            { mes: "Fevereiro", nome: "Vania do Carmo Rodrigues Reis", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "19/01/2026" },
+            { mes: "Fevereiro", nome: "Zenaide Maria Bolzon", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "20/01/2026" },
+
+            // Março - Não constam no SISCAN
+            { mes: "Março", nome: "Gilselene dos Santos Anunciacao", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "04/03/2026" },
+            { mes: "Março", nome: "Gercileia Gomes de Faria", cod: "204030030", proc: "Mamografia Unilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "06/03/2026" },
+            { mes: "Março", nome: "Jane Mariano da Cena", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "09/03/2026" },
+            { mes: "Março", nome: "Maria Claudia Vargas", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "23/03/2026" },
+            { mes: "Março", nome: "Nazira Ferreira Xavier", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "11/03/2026" },
+            { mes: "Março", nome: "Nadira Ferreira Xavier da Silva", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "11/03/2026" },
+            { mes: "Março", nome: "Maria de Fatima Araujo Bogado", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "09/03/2026" },
+            { mes: "Março", nome: "Marta Borges Roberto", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "02/03/2026" },
+            // Março - Glosadas
+            { mes: "Março", nome: "Susi Rodrigues", cod: "204030188", proc: "Mamografia Bilateral", status: "Glosada (Auditoria Médica)", motivo: "Sem carimbo e assinatura na requisição", data: "N/A" },
+            { mes: "Março", nome: "Eliana Matos de Almeida", cod: "204030188", proc: "Mamografia Bilateral", status: "Glosada (Auditoria Médica)", motivo: "Sem carimbo e assinatura na requisição", data: "N/A" },
+            { mes: "Março", nome: "Maria Aparecida Pimentel", cod: "204030188", proc: "Mamografia Bilateral", status: "Glosada (Auditoria Médica)", motivo: "Sem carimbo e assinatura na requisição", data: "N/A" },
+            { mes: "Março", nome: "Rosa Marques de Oliveira", cod: "204030188", proc: "Mamografia Bilateral", status: "Glosada (Auditoria Médica)", motivo: "Sem laudo", data: "N/A" },
+
+            // Abril - Não constam no SISCAN
+            { mes: "Abril", nome: "Jussileia Olimpio de Souza", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "23/03/2026" },
+            { mes: "Abril", nome: "Nair Ferreira Xavier Vieira", cod: "204030188", proc: "Mamografia bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "10/04/2026" },
+            { mes: "Abril", nome: "Marina Comege do Nascimento", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "11/03/2026" },
+            { mes: "Abril", nome: "Nadja Mattos de Oliveira", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "20/03/2026" },
+            { mes: "Abril", nome: "Sara Siqueira da Silva", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "25/03/2026" },
+            { mes: "Abril", nome: "Saira Silvia Ferreira Nantes Arantes", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "20/03/2026" },
+            { mes: "Abril", nome: "Sonia Maria Bergonzi", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "02/03/2026" },
+            { mes: "Abril", nome: "Regina Celia Ambrozio", cod: "204030188", proc: "Mamografia Bilateral", status: "Pendente inclusão SISCAN", data: "24/03/2026" },
+            { mes: "Abril", nome: "Maria do Socorro dos Santos Silva", cod: "204030188", proc: "Mamografia Bilateral", status: "Pendente inclusão SISCAN", data: "24/03/2026" },
+            { mes: "Abril", nome: "Maria Jose Pires do Prado", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Sem laudo (s/laudo)", data: "04/03/2026" },
+            // Abril - Não Apresentadas
+            { mes: "Abril", nome: "MAIRA GODOY DELVALLES", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "MARIA APARECIDA MENDES DE SA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "MARIA DE FATIMA DA SILVA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "NADIA RAMIRES TAVARES", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "NANCI PADILLA DE RIBEIRO ALVES", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "NOEMIA RIBEIRO DE SOUZA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "OCELIA DE SOUZA BARRETO", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "PATRICIA LIMA FRANCO", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "PETRONA ESCOBAR VALDEZ", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "RAQUEL PEREIRA DE CARVALHO ROD", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "REGIANE FERNANDES NOGUEIRA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "REGIANE RODRIGUES DA SILVA SAN", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "RENATA CRISTALDO VILLALTA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "ROMARIA MARTINS DE MELO", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "ROSANGELA MARIA ROSA DE SOUZA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "ROSELI GONSALO", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "ROSENILDA RIBEIRO DA SILVA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "SALETE VIEIRA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "SIRLEI SABINO DE MOURA DIAS", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "SOCORRO MARIA BARBOSA DA SILVA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "SOFIA SOUZA DOS SANTOS", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "SOLANGE CUSTODIO DOS SANTOS", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "SONIA MARIA ROBLES", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "SUELY IDALINO ALVES", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "TATIANE CABRAL RIBEIRO GUSSO", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "TATIANE ROSEMBARQUE DA SILVA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "VALERIA VENANCIO GARCIA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "VANESSA DE SOUZA FERRAZ", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "VANUSA BRUM ORTIZ", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "VERA LUCIA ROSA DE MORAIS", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "ZILDA PEREIRA GOMES ALMEIDA", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
+            { mes: "Abril", nome: "ZULEIDE FERREIRA LIMA SANCHES", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" }
+        ];
+
+        let chartEvolucao = null;
+        let chartInconsistencias = null;
+
+        function inicializarGraficos() {
+            const ctxEvolucao = document.getElementById('chartEvolucao').getContext('2d');
+            chartEvolucao = new Chart(ctxEvolucao, {
+                type: 'bar',
+                data: {
+                    labels: ['Fevereiro', 'Março', 'Abril'],
+                    datasets: [
+                        { label: 'Recebidas no Faturamento', data: [356, 355, 332], backgroundColor: '#3b82f6', borderRadius: 6 },
+                        { label: 'Faturadas SISCAN', data: [333, 347, 354], backgroundColor: '#10b981', borderRadius: 6 },
+                        { label: 'Aprovadas Pós-Auditoria', data: [230, 341, 322], backgroundColor: '#6366f1', borderRadius: 6 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            });
+
+            const ctxInconsistencias = document.getElementById('chartInconsistencias').getContext('2d');
+            chartInconsistencias = new Chart(ctxInconsistencias, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Não Constam SISCAN', 'Glosadas (Médica)', 'Não Apresentadas'],
+                    datasets: [{
+                        data: [41, 4, 32],
+                        backgroundColor: ['#f59e0b', '#ef4444', '#64748b'],
+                        borderWidth: 2
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function filtrarDashboard(mes) {
+            let recebidas = 0, aprovadas = 0, naoSiscan = 0, glosas = 0;
+
+            if (mes === 'todos') {
+                Object.values(dadosResumo).forEach(m => {
+                    recebidas += m.recebidas; aprovadas += m.aprovadas; naoSiscan += m.naoSiscan;
+                });
+                glosas = 4 + 32; 
+                
+                chartEvolucao.data.datasets[0].data = [356, 355, 332];
+                chartEvolucao.data.datasets[1].data = [333, 347, 354];
+                chartEvolucao.data.datasets[2].data = [230, 341, 322];
+                chartInconsistencias.data.datasets[0].data = [41, 4, 32];
+            } else {
+                const d = dadosResumo[mes];
+                recebidas = d.recebidas;
+                aprovadas = d.aprovadas;
+                naoSiscan = d.naoSiscan;
+                glosas = mes === 'Março' ? d.glosas : (mes === 'Abril' ? 32 : 0);
+
+                chartEvolucao.data.datasets[0].data = [mes === 'Fevereiro' ? 356 : 0, mes === 'Março' ? 355 : 0, mes === 'Abril' ? 332 : 0];
+                chartEvolucao.data.datasets[1].data = [mes === 'Fevereiro' ? 333 : 0, mes === 'Março' ? 347 : 0, mes === 'Abril' ? 354 : 0];
+                chartEvolucao.data.datasets[2].data = [mes === 'Fevereiro' ? 230 : 0, mes === 'Março' ? 341 : 0, mes === 'Abril' ? 322 : 0];
+                chartInconsistencias.data.datasets[0].data = [d.naoSiscan, mes === 'Março' ? 4 : 0, mes === 'Abril' ? 32 : 0];
+            }
+
+            document.getElementById('kpi-recebidas').innerText = recebidas.toLocaleString();
+            document.getElementById('kpi-aprovadas').innerText = aprovadas.toLocaleString();
+            document.getElementById('kpi-nao-siscan').innerText = naoSiscan.toLocaleString();
+            document.getElementById('kpi-glosas').innerText = glosas.toLocaleString();
+            
+            const conversao = recebidas > 0 ? ((aprovadas / recebidas) * 100).toFixed(1) : 0;
+            document.getElementById('kpi-conversao').innerText = `${conversao}% de eficiência regulatória`;
+
+            chartEvolucao.update();
+            chartInconsistencias.update();
+            filtrarTabela();
+        }
+
+        function filtrarTabela() {
+            const mesSelecionado = document.getElementById('mesFilter').value;
+            const catSelecionada = document.getElementById('categoriaFilter').value;
+            const tbody = document.getElementById('tabelaPacientes');
+            tbody.innerHTML = '';
+
+            const filtrados = pacientesOcorrencias.filter(p => {
+                const bateMes = (mesSelecionado === 'todos' || p.mes === mesSelecionado);
+                const bateCat = (catSelecionada === 'todas' || p.status === catSelecionada);
+                return bateMes && bateCat;
+            });
+
+            if(filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-slate-400 text-xs">Nenhum registro de inconformidade encontrado para os filtros aplicados.</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach(p => {
+                let badgeColor = "bg-amber-50 text-amber-700";
+                if(p.status === 'Glosada (Auditoria Médica)') badgeColor = "bg-rose-50 text-rose-700";
+                if(p.status === 'Não Apresentada para Auditoria') badgeColor = "bg-slate-100 text-slate-700";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 text-xs font-semibold text-slate-600">${p.mes}</td>
+                    <td class="px-6 py-3.5 text-xs font-bold text-slate-900">${p.nome}</td>
+                    <td class="px-6 py-3.5 text-xs text-slate-500">${p.proc} <span class="text-[10px] text-slate-400 block">${p.cod}</span></td>
+                    <td class="px-6 py-3.5 text-xs"><span class="px-2 py-1 rounded-md font-medium text-[11px] ${badgeColor}">${p.status}</span></td>
+                    <td class="px-6 py-3.5 text-xs text-slate-600 font-medium">${p.motivo}</td>
+                    <td class="px-6 py-3.5 text-xs text-slate-400">${p.data}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Garante a execução quando a árvore DOM estiver montada
+        document.addEventListener("DOMContentLoaded", function() {
+            inicializarGraficos();
+            filtrarTabela();
+        });
+    </script>
+</body>
+</html>
