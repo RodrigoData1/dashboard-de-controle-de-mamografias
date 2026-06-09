@@ -26,27 +26,39 @@
                         <p class="text-sm text-slate-500">Análise histórica e conciliação de produção (Fevereiro - Abril 2026)</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                    <label for="mesFilter" class="text-sm font-semibold text-slate-600 pl-1">Filtrar Mês:</label>
-                    <select id="mesFilter" onchange="filtrarDashboard(this.value)" class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
-                        <option value="todos">Todos os Meses (Consolidado)</option>
-                        <option value="Fevereiro">Fevereiro / 2026</option>
-                        <option value="Março">Março / 2026</option>
-                        <option value="Abril">Abril / 2026</option>
-                    </select>
+                <div class="flex items-center gap-4">
+                    <!-- Badge de Meta Mensal Fixa -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-right hidden sm:block">
+                        <span class="text-xs font-bold text-amber-700 block uppercase tracking-wider">Meta Mensal</span>
+                        <span class="text-lg font-black text-amber-900">376 exames</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <label for="mesFilter" class="text-sm font-semibold text-slate-600 pl-1">Filtrar Mês:</label>
+                        <select id="mesFilter" onchange="filtrarDashboard(this.value)" class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                            <option value="todos">Todos os Meses (Consolidado)</option>
+                            <option value="Fevereiro">Fevereiro / 2026</option>
+                            <option value="Março">Março / 2026</option>
+                            <option value="Abril">Abril / 2026</option>
+                        </select>
+                    </div>
                 </div>
             </header>
 
             <div class="p-8 space-y-8">
                 
+                <!-- KPIs -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
                         <div class="flex justify-between items-start">
                             <span class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Recebidas no Fat.</span>
                         </div>
                         <div class="mt-4">
-                            <h3 id="kpi-recebidas" class="text-3xl font-bold text-slate-9900">1.043</h3>
-                            <p class="text-xs text-slate-400 mt-1">Exames físicos entregues</p>
+                            <h3 id="kpi-recebidas" class="text-3xl font-bold text-slate-900">1.043</h3>
+                            <div class="mt-1 space-y-0.5">
+                                <p class="text-xs text-slate-400">Exames físicos entregues</p>
+                                <p id="kpi-recebidas-vs-meta" class="text-xs text-blue-600 font-bold">Meta do Período: 1.128</p>
+                            </div>
                         </div>
                     </div>
 
@@ -56,7 +68,10 @@
                         </div>
                         <div class="mt-4">
                             <h3 id="kpi-aprovadas" class="text-3xl font-bold text-emerald-600">893</h3>
-                            <p id="kpi-conversao" class="text-xs text-emerald-600 font-medium mt-1">85.6% de eficiência regulatória</p>
+                            <div class="mt-1 space-y-0.5">
+                                <p id="kpi-conversao" class="text-xs text-emerald-600 font-medium">85.6% de eficiência regulatória</p>
+                                <p id="kpi-meta-atingida" class="text-xs text-amber-600 font-bold">79.2% da meta total do período</p>
+                            </div>
                         </div>
                     </div>
 
@@ -81,11 +96,12 @@
                     </div>
                 </div>
 
+                <!-- Gráficos -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-base font-bold text-slate-900">Evolução de Faturamento vs. Recebidos</h3>
-                            <span class="text-xs text-slate-400">Dados do Fechamento Mensal</span>
+                            <span class="text-xs text-slate-400">Linha vermelha indica a meta (376/mês)</span>
                         </div>
                         <div class="h-72">
                             <canvas id="chartEvolucao"></canvas>
@@ -103,6 +119,7 @@
                     </div>
                 </div>
 
+                <!-- Tabela Nominal -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-wrap justify-between items-center gap-4">
                         <div>
@@ -132,7 +149,8 @@
                                 </tr>
                             </thead>
                             <tbody id="tabelaPacientes" class="divide-y divide-slate-100 text-slate-700">
-                                </tbody>
+                                <!-- Inserção via JS -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -142,10 +160,12 @@
     </div>
 
     <script>
+        const META_MENSAL = 376;
+
         const dadosResumo = {
-            "Fevereiro": { faturadasSiscan: 333, recebidas: 356, naoSiscan: 23, faturadoNaoRecebido: 103, glosas: 0, aprovadas: 230 },
-            "Março": { faturadasSiscan: 347, recebidas: 355, naoSiscan: 8, faturadoNaoRecebido: 1, glosas: 4, aprovadas: 341 },
-            "Abril": { faturadasSiscan: 354, recebidas: 332, naoSiscan: 10, faturadoNaoRecebido: 32, glosas: 0, aprovadas: 322 }
+            "Fevereiro": { faturadasSiscan: 333, recebidas: 356, naoSiscan: 23, glosas: 0, naoApresentadas: 0, aprovadas: 230 },
+            "Março": { faturadasSiscan: 347, recebidas: 355, naoSiscan: 8, glosas: 4, naoApresentadas: 0, aprovadas: 341 },
+            "Abril": { faturadasSiscan: 354, recebidas: 332, naoSiscan: 10, glosas: 0, naoApresentadas: 32, aprovadas: 322 }
         };
 
         const pacientesOcorrencias = [
@@ -197,8 +217,8 @@
             { mes: "Abril", nome: "Sara Siqueira da Silva", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "25/03/2026" },
             { mes: "Abril", nome: "Saira Silvia Ferreira Nantes Arantes", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "20/03/2026" },
             { mes: "Abril", nome: "Sonia Maria Bergonzi", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "02/03/2026" },
-            { mes: "Abril", nome: "Regina Celia Ambrozio", cod: "204030188", proc: "Mamografia Bilateral", status: "Pendente inclusão SISCAN", data: "24/03/2026" },
-            { mes: "Abril", nome: "Maria do Socorro dos Santos Silva", cod: "204030188", proc: "Mamografia Bilateral", status: "Pendente inclusão SISCAN", data: "24/03/2026" },
+            { mes: "Abril", nome: "Regina Celia Ambrozio", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "24/03/2026" },
+            { mes: "Abril", nome: "Maria do Socorro dos Santos Silva", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Pendente inclusão SISCAN", data: "24/03/2026" },
             { mes: "Abril", nome: "Maria Jose Pires do Prado", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Consta no SISCAN", motivo: "Sem laudo (s/laudo)", data: "04/03/2026" },
             // Abril - Não Apresentadas
             { mes: "Abril", nome: "MAIRA GODOY DELVALLES", cod: "204030188", proc: "Mamografia Bilateral", status: "Não Apresentada para Auditoria", motivo: "Item físico retido/não entregue", data: "N/A" },
@@ -245,9 +265,10 @@
                 data: {
                     labels: ['Fevereiro', 'Março', 'Abril'],
                     datasets: [
-                        { label: 'Recebidas no Faturamento', data: [356, 355, 332], backgroundColor: '#3b82f6', borderRadius: 6 },
-                        { label: 'Faturadas SISCAN', data: [333, 347, 354], backgroundColor: '#10b981', borderRadius: 6 },
-                        { label: 'Aprovadas Pós-Auditoria', data: [230, 341, 322], backgroundColor: '#6366f1', borderRadius: 6 }
+                        { label: 'Recebidas no Faturamento', data: [356, 355, 332], backgroundColor: '#3b82f6', borderRadius: 6, order: 2 },
+                        { label: 'Faturadas SISCAN', data: [333, 347, 354], backgroundColor: '#10b981', borderRadius: 6, order: 2 },
+                        { label: 'Aprovadas Pós-Auditoria', data: [230, 341, 322], backgroundColor: '#6366f1', borderRadius: 6, order: 2 },
+                        { label: 'Meta Mensal (376)', data: [META_MENSAL, META_MENSAL, META_MENSAL], borderColor: '#f43f5e', borderDash: [6, 6], borderWidth: 2, type: 'line', fill: false, pointRadius: 4, order: 1 }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
@@ -269,38 +290,63 @@
         }
 
         function filtrarDashboard(mes) {
-            let recebidas = 0, aprovadas = 0, naoSiscan = 0, glosas = 0;
+            let recebidas = 0, aprovadas = 0, naoSiscan = 0, glosas = 0, naoApres = 0;
+            let metaCalculada = META_MENSAL;
 
             if (mes === 'todos') {
                 Object.values(dadosResumo).forEach(m => {
-                    recebidas += m.recebidas; aprovadas += m.aprovadas; naoSiscan += m.naoSiscan;
+                    recebidas += m.recebidas; 
+                    aprovadas += m.aprovadas; 
+                    naoSiscan += m.naoSiscan;
+                    glosas += m.glosas;
+                    naoApres += m.naoApresentadas;
                 });
-                glosas = 4 + 32; 
                 
+                metaCalculada = META_MENSAL * 3;
+
+                chartEvolucao.data.labels = ['Fevereiro', 'Março', 'Abril'];
                 chartEvolucao.data.datasets[0].data = [356, 355, 332];
                 chartEvolucao.data.datasets[1].data = [333, 347, 354];
                 chartEvolucao.data.datasets[2].data = [230, 341, 322];
-                chartInconsistencias.data.datasets[0].data = [41, 4, 32];
+                chartEvolucao.data.datasets[3].data = [META_MENSAL, META_MENSAL, META_MENSAL];
+                chartEvolucao.data.datasets[3].label = "Meta Mensal (376)";
+                
+                chartInconsistencias.data.datasets[0].data = [naoSiscan, glosas, naoApres];
             } else {
                 const d = dadosResumo[mes];
                 recebidas = d.recebidas;
                 aprovadas = d.aprovadas;
                 naoSiscan = d.naoSiscan;
-                glosas = mes === 'Março' ? d.glosas : (mes === 'Abril' ? 32 : 0);
+                glosas = d.glosas;
+                naoApres = d.naoApresentadas;
 
-                chartEvolucao.data.datasets[0].data = [mes === 'Fevereiro' ? 356 : 0, mes === 'Março' ? 355 : 0, mes === 'Abril' ? 332 : 0];
-                chartEvolucao.data.datasets[1].data = [mes === 'Fevereiro' ? 333 : 0, mes === 'Março' ? 347 : 0, mes === 'Abril' ? 354 : 0];
-                chartEvolucao.data.datasets[2].data = [mes === 'Fevereiro' ? 230 : 0, mes === 'Março' ? 341 : 0, mes === 'Abril' ? 322 : 0];
-                chartInconsistencias.data.datasets[0].data = [d.naoSiscan, mes === 'Março' ? 4 : 0, mes === 'Abril' ? 32 : 0];
+                chartEvolucao.data.labels = [mes];
+                chartEvolucao.data.datasets[0].data = [recebidas];
+                chartEvolucao.data.datasets[1].data = [d.faturadasSiscan];
+                chartEvolucao.data.datasets[2].data = [aprovadas];
+                chartEvolucao.data.datasets[3].data = [META_MENSAL];
+                chartEvolucao.data.datasets[3].label = "Meta do Mês (376)";
+                
+                chartInconsistencias.data.datasets[0].data = [naoSiscan, glosas, naoApres];
             }
 
+            // Atualiza os blocos superiores de informação
             document.getElementById('kpi-recebidas').innerText = recebidas.toLocaleString();
             document.getElementById('kpi-aprovadas').innerText = aprovadas.toLocaleString();
             document.getElementById('kpi-nao-siscan').innerText = naoSiscan.toLocaleString();
-            document.getElementById('kpi-glosas').innerText = glosas.toLocaleString();
+            document.getElementById('kpi-glosas').innerText = (glosas + naoApres).toLocaleString();
             
+            // Atualiza o indicador de Meta no bloco de Recebidos
+            const sufMetaRecebidos = mes === 'todos' ? `Meta do Período: ${metaCalculada}` : `Meta Mensal: ${META_MENSAL}`;
+            document.getElementById('kpi-recebidas-vs-meta').innerText = sufMetaRecebidos;
+
+            // Lógica dos textos internos do KPI de Aprovadas
             const conversao = recebidas > 0 ? ((aprovadas / recebidas) * 100).toFixed(1) : 0;
             document.getElementById('kpi-conversao').innerText = `${conversao}% de eficiência regulatória`;
+
+            const atingimentoMeta = ((aprovadas / metaCalculada) * 100).toFixed(1);
+            const sufixoMeta = mes === 'todos' ? 'da meta total do período' : 'da meta mensal atingida';
+            document.getElementById('kpi-meta-atingida').innerText = `${atingimentoMeta}% ${sufixoMeta}`;
 
             chartEvolucao.update();
             chartInconsistencias.update();
@@ -343,11 +389,15 @@
             });
         }
 
-        // Garante a execução quando a árvore DOM estiver montada
         document.addEventListener("DOMContentLoaded", function() {
             inicializarGraficos();
             filtrarTabela();
+            filtrarDashboard('todos'); // Inicializa calculando as metas agregadas
         });
     </script>
 </body>
 </html>
+
+  
+     
+ 
